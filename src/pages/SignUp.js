@@ -1,35 +1,124 @@
-import React from "react";
-import styled from "styled-components";
+import React, { useState } from "react";
+import { useForm } from "react-hook-form";
+import { useNavigate } from "react-router-dom";
+import {
+  Main,
+  Card,
+  TitleContainer,
+  Title,
+  Subtitle,
+  FormContainer,
+  FormGroup,
+  StyledInput,
+  ButtonPrimary,
+  FooterText,
+  SignUpLink,
+  ErrorText,
+  InputDiv,
+} from "../assets/styles/StyledSignUp";
+import { registerUser } from "../services/auth";
 
 const SignUp = () => {
+  const navigate = useNavigate();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm();
+  const [apiError, setApiError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const onSubmit = async (formData) => {
+    try {
+      setLoading(true);
+      setApiError("");
+
+      const data = {
+        userName: formData.username,
+        name: formData.name,
+        password: formData.password,
+      };
+
+      const response = await registerUser(data);
+
+      if (response.data) {
+        navigate("/");
+      }
+    } catch (error) {
+      console.error(
+        "Registration Failed:",
+        error.response?.data?.message || error.message
+      );
+      setApiError(
+        error.response?.data?.message || "Something went wrong. Try again!"
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div>
-      <Nav>
-        <Brand>EventFlow</Brand>
-      </Nav>
       <Main>
         <Card>
           <TitleContainer>
             <Title>Create Account</Title>
-            <Subtitle>join EventFLow to manage your events</Subtitle>
+            <Subtitle>Join EventFlow to manage your events</Subtitle>
           </TitleContainer>
-          <FormContainer>
-            <FormGroup>
-              <div style={{ display: "flex" }}>
-                <StyledInput type="text" placeholder="First Name" />
-                <StyledInput type="text" placeholder="Last Name" />
-              </div>
-              <StyledInput type="email" placeholder="Email address" />
-              <StyledInput type="password" placeholder="Password" />
-              <StyledInput type="password" placeholder="Confirm Password" />
-            </FormGroup>
-            <ButtonPrimary>Sign Up</ButtonPrimary>
 
-            <FooterText>
-              Already have Account?
-              <SignUpLink href="#">Sign in</SignUpLink>
-            </FooterText>
-          </FormContainer>
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <FormContainer>
+              <FormGroup>
+                <InputDiv>
+                  <StyledInput
+                    type="text"
+                    placeholder="Enter a username"
+                    {...register("username", {
+                      required: "Username is required",
+                      minLength: { value: 3, message: "Min length is 3" },
+                    })}
+                  />
+                  {errors.username && (
+                    <ErrorText>{errors.username.message}</ErrorText>
+                  )}
+                </InputDiv>
+
+                <InputDiv>
+                  <StyledInput
+                    type="text"
+                    placeholder="Enter your name"
+                    {...register("name", { required: "Name is required" })}
+                  />
+                  {errors.name && <ErrorText>{errors.name.message}</ErrorText>}
+                </InputDiv>
+
+                <InputDiv>
+                  <StyledInput
+                    type="password"
+                    placeholder="Enter your password"
+                    {...register("password", {
+                      required: "Password is required",
+                      minLength: { value: 6, message: "Min length is 6" },
+                    })}
+                  />
+                  {errors.password && (
+                    <ErrorText>{errors.password.message}</ErrorText>
+                  )}
+                </InputDiv>
+              </FormGroup>
+
+              {apiError && <ErrorText>{apiError}</ErrorText>}
+
+              <ButtonPrimary type="submit" disabled={loading}>
+                {loading ? "Registering..." : "Sign Up"}
+              </ButtonPrimary>
+
+              <FooterText>
+                Already have an account?
+                <SignUpLink onClick={() => navigate("/")}>Sign in</SignUpLink>
+              </FooterText>
+            </FormContainer>
+          </form>
         </Card>
       </Main>
     </div>
@@ -37,123 +126,3 @@ const SignUp = () => {
 };
 
 export default SignUp;
-
-const Nav = styled.nav`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px;
-  background-color: white;
-  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
-`;
-
-const Brand = styled.h1`
-  margin: 0;
-  font-size: 2rem;
-  font-weight: 900;
-  font-style: italic;
-  background: linear-gradient(to right, #2563eb, #8b5cf6);
-  -webkit-background-clip: text;
-  color: transparent;
-  transition: transform 0.3s;
-  &:hover {
-    transform: scale(1.05);
-  }
-`;
-
-const Main = styled.main``;
-
-const Card = styled.div`
-  max-width: 22rem;
-  margin: auto;
-  background: white;
-  border-radius: 1.5rem;
-  box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.1);
-  padding: 0.5rem;
-`;
-
-const StyledInput = styled.input`
-  padding: 1rem;
-  border: 1px solid #e5e7eb; /* gray-200 */
-  border-radius: 1.75rem;
-  transition: all 0.3s ease;
-
-  &:focus {
-    outline: none;
-    border-color: #2563eb; /* blue-600 */
-    box-shadow: 0 0 0 2px #dbeafe; /* blue-100 */
-  }
-`;
-
-const ButtonPrimary = styled.button`
-  padding: 1rem;
-  border: none;
-  background: #2563eb;
-  color: white;
-  border-radius: 1.75rem;
-  transition: all 0.3s;
-  font-weight: bold;
-  box-shadow: 0px 4px 10px rgba(37, 99, 235, 0.2);
-  &:hover {
-    background: #1e40af;
-    transform: translateY(-2px);
-    box-shadow: 0px 6px 14px rgba(37, 99, 235, 0.3);
-  }
-`;
-
-const ButtonSecondary = styled.button`
-  padding: 1rem;
-  border: none;
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
-  border-radius: 1.75rem;
-  transition: all 0.3s;
-  font-weight: bold;
-  &:hover {
-    background: #f3f4f6;
-    transform: translateY(-2px);
-  }
-`;
-
-const TitleContainer = styled.div`
-  text-align: center;
-  margin-bottom: 2.5rem;
-`;
-
-const Title = styled.h2`
-  font-size: 1.875rem;
-  font-weight: bold;
-  margin-bottom: 0.75rem;
-`;
-
-const Subtitle = styled.p`
-  color: #6b7280;
-  margin: 0;
-`;
-
-const FormContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-`;
-
-const FormGroup = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  margin-bottom: 2rem;
-`;
-
-const FooterText = styled.p`
-  text-align: center;
-  color: #6b7280;
-  margin-top: 2rem;
-`;
-
-const SignUpLink = styled.a`
-  color: #2563eb;
-  margin-left: 0.25rem;
-  &:hover {
-    color: #1e40af;
-  }
-`;

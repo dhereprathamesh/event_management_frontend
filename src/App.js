@@ -1,19 +1,8 @@
 import "./App.css";
-import CreateEvent from "./pages/CreateEvent";
-import EventDashboard from "./pages/EventDashboard";
-import SignIn from "./pages/SignIn";
-import SignUp from "./pages/SignUp";
+import AppRouter from "./router/AppRouter";
 
 function App() {
-  return (
-    <div className="">
-      {" "}
-      {/* <SignIn /> */}
-      {/* <SignUp /> */}
-      {/* <EventDashboard /> */}
-      <CreateEvent />
-    </div>
-  );
+  return <AppRouter />;
 }
 
 export default App;

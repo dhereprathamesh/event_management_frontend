@@ -1,40 +1,64 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
-import Swal from "sweetalert2";
-import { createEvent } from "../services/eventApi";
-import { useNavigate } from "react-router-dom";
 import { Main } from "../assets/styles/StyledCreateEvent";
+import { useNavigate, useParams } from "react-router-dom";
+import Swal from "sweetalert2";
+import { getEventById, updateEvent } from "../services/eventApi";
 
-const CreateEvent = () => {
+const UpdateEvent = () => {
+  const { eventId } = useParams();
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+
   const {
     register,
     handleSubmit,
     control,
+    setValue,
     formState: { errors },
+    reset,
   } = useForm();
-  const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    const fetchEvent = async () => {
+      try {
+        const response = await getEventById(eventId);
+        const eventData = response.data.event;
+        setValue("eventName", eventData.title);
+        setValue("description", eventData.description);
+        setValue("date", eventData.date);
+        setValue("startTime", eventData.time);
+        setValue("category", eventData.category);
+        setValue("duration", eventData.duration);
+      } catch (error) {
+        console.error("Error fetching event:", error);
+      }
+    };
+
+    fetchEvent();
+  }, [eventId, setValue]);
+
+  // Handle form submission (Update Event)
   const onSubmit = async (formData) => {
     setLoading(true);
-    const createByID = localStorage.getItem("createdBy");
-    const data = {
+
+    const updatedEvent = {
       title: formData.eventName,
       description: formData.description,
       date: formData.date,
       time: formData.startTime,
       category: formData.category,
       duration: formData.duration,
-      createdBy: createByID,
     };
 
     try {
-      const response = await createEvent(data);
+      // Call update event API
+      await updateEvent(eventId, updatedEvent);
 
       Swal.fire({
         icon: "success",
-        title: "Event Created!",
-        text: "Your event has been successfully created.",
+        title: "Event Updated!",
+        text: "Your event has been successfully updated.",
         confirmButtonColor: "#4CAF50",
       }).then((result) => {
         if (result.isConfirmed || result.isDismissed) {
@@ -42,21 +66,17 @@ const CreateEvent = () => {
         }
       });
     } catch (error) {
-      console.error("Error creating event:", error);
-
+      console.error("Error updating event:", error);
       Swal.fire({
         icon: "error",
         title: "Oops...",
-        text:
-          error.response?.data?.message ||
-          "Failed to create event. Please try again.",
+        text: "Failed to update event. Please try again.",
         confirmButtonColor: "#d33",
       });
     } finally {
       setLoading(false);
     }
   };
-
   const categories = [
     "Music",
     "Technology",
@@ -71,9 +91,7 @@ const CreateEvent = () => {
     <Main>
       <form onSubmit={handleSubmit(onSubmit)}>
         <div className="card-container">
-          <div className="content-row">
-            <h2 className="gradient-heading">Create New Event</h2>
-          </div>
+          <h2 className="gradient-heading">Update Event</h2>
 
           <div className="grid-layout">
             <div className="spaced-content">
@@ -82,7 +100,6 @@ const CreateEvent = () => {
                 <input
                   type="text"
                   className="input-field"
-                  placeholder="Enter event name..."
                   {...register("eventName", {
                     required: "Event Name is required",
                   })}
@@ -96,7 +113,6 @@ const CreateEvent = () => {
                 <label className="label-text">Description</label>
                 <textarea
                   className="textarea-field"
-                  placeholder="Describe your event..."
                   {...register("description", {
                     required: "Description is required",
                   })}
@@ -117,6 +133,7 @@ const CreateEvent = () => {
                   <p className="error-text">{errors.date.message}</p>
                 )}
               </div>
+
               <div className="time-box">
                 <div className="time-input-box">
                   <label className="label-text">Start Time</label>
@@ -131,6 +148,7 @@ const CreateEvent = () => {
                     <p className="error-text">{errors.startTime.message}</p>
                   )}
                 </div>
+
                 <div className="time-input-box">
                   <label className="label-text">Duration</label>
                   <input
@@ -172,10 +190,15 @@ const CreateEvent = () => {
           </div>
 
           <div className="button-group">
-            <button className="button-secondary">Cancel</button>
-            <button className="btn-primary">
-              <span className="material-symbols-outlined">rocket_launch</span>
-              Publish Event
+            <button
+              className="button-secondary"
+              type="button"
+              onClick={() => navigate(-1)}
+            >
+              Cancel
+            </button>
+            <button className="btn-primary" type="submit" disabled={loading}>
+              {loading ? "Updating..." : "Update Event"}
             </button>
           </div>
         </div>
@@ -184,4 +207,4 @@ const CreateEvent = () => {
   );
 };
 
-export default CreateEvent;
+export default UpdateEvent;
